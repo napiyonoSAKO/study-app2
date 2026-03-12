@@ -3,58 +3,60 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>デリシャス・スタディ V7 FINAL</title>
+    <title>デリシャス・スタディ V9 - 完全版</title>
     <style>
         :root {
             --main-food: #ffb347; --bg-vanilla: #fff9f0; --text-choco: #5d4037;
-            --btn-green: #8bc34a; --btn-red: #ef5350; --study-orange: #fb8c00;
+            --btn-green: #8bc34a; --btn-red: #ef5350;
         }
-        body { font-family: 'Hiragino Maru Gothic ProN', sans-serif; margin: 0; background: var(--bg-vanilla); color: var(--text-choco); overflow: hidden; }
+        body { font-family: 'Hiragino Maru Gothic ProN', sans-serif; margin: 0; background: var(--bg-vanilla); color: var(--text-choco); overflow: hidden; touch-action: pan-y; }
         
-        /* ヘッダー */
-        .header { background: var(--main-food); color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; position: fixed; top: 0; width: 100%; height: 60px; z-index: 2000; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        .header h1 { font-size: 1.2rem; margin: 0; flex-grow: 1; text-align: center; font-weight: 900; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
+        .header { background: var(--main-food); color: white; display: flex; align-items: center; justify-content: space-between; padding: 0 15px; position: fixed; top: 0; width: 100%; height: 60px; z-index: 2000; }
+        .header h1 { font-size: 1.1rem; margin: 0; flex-grow: 1; text-align: center; font-weight: 900; text-shadow: 2px 2px 4px rgba(0,0,0,0.3); }
         .menu-btn, .plus-btn { background: none; border: none; color: white; font-size: 1.8rem; cursor: pointer; min-width: 40px; }
 
-        /* サイドメニュー */
-        .side-menu { position: fixed; top: 0; left: -250px; width: 220px; height: 100%; background: white; z-index: 3000; transition: 0.3s ease-out; padding-top: 60px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
+        .side-menu { position: fixed; top: 0; left: -250px; width: 220px; height: 100%; background: white; z-index: 3000; transition: 0.3s; padding-top: 60px; box-shadow: 2px 0 10px rgba(0,0,0,0.1); }
         .side-menu.open { left: 0; }
-        .menu-item { width: 100%; padding: 18px 20px; border: none; background: none; text-align: left; font-size: 1rem; cursor: pointer; border-bottom: 1px solid #f0f0f0; color: var(--text-choco); }
-        .menu-item.active { background: #fff0db; color: var(--main-food); font-weight: bold; border-left: 5px solid var(--main-food); }
+        .menu-item { width: 100%; padding: 18px 20px; border: none; background: none; text-align: left; font-size: 1rem; border-bottom: 1px solid #f0f0f0; }
 
         .content { margin-top: 60px; height: calc(100vh - 60px); position: relative; }
         section { display: none; height: 100%; overflow-y: auto; padding: 20px; box-sizing: border-box; padding-bottom: 120px; }
         section.active { display: block; }
 
-        /* お部屋 & キャラクター */
+        /* お部屋 & たまご */
         #room-stage { width: 100%; height: 230px; background: white; border-radius: 20px; position: relative; overflow: hidden; border: 4px solid #f8e1c1; }
-        #room-char { font-size: 5rem; position: absolute; bottom: 10px; left: 50%; transition: left 3s linear; cursor: pointer; z-index: 10; }
-        .bubble { position: absolute; background: white; border: 2px solid var(--main-food); border-radius: 15px; padding: 8px 12px; font-size: 0.8rem; bottom: 100px; left: 50%; transform: translateX(-50%); white-space: nowrap; opacity: 0; transition: opacity 0.5s; z-index: 20; }
+        #room-char { font-size: 4rem; position: absolute; bottom: 10px; left: 50%; transition: left 3s linear; text-align: center; }
+        .char-face { font-size: 1rem; display: block; margin-top: -10px; font-weight: bold; }
+        .bubble { position: absolute; background: white; border: 2px solid var(--main-food); border-radius: 15px; padding: 8px 12px; font-size: 0.7rem; bottom: 100px; left: 50%; transform: translateX(-50%); opacity: 0; transition: 0.5s; z-index: 20; }
 
-        /* スケジュール帳（復活！） */
-        .timeline-wrapper { position: relative; width: 100%; padding-bottom: 1440px; background: white; }
-        .time-row { display: flex; border-bottom: 1px solid #eee; height: 60px; }
-        .time-label { width: 50px; text-align: right; padding-right: 10px; font-size: 0.7rem; color: #999; line-height: 20px; }
-        .plan-block { position: absolute; left: 55px; right: 10px; opacity: 0.8; z-index: 5; padding: 5px; font-size: 0.75rem; border-radius: 8px; color: var(--text-choco); font-weight: bold; border-left: 5px solid rgba(0,0,0,0.1); }
+        /* お鍋タイマー */
+        #pot-container { position: absolute; bottom: 20px; right: 20%; display: none; z-index: 5; text-align: center; }
+        .pot { font-size: 3.5rem; animation: cook 0.5s infinite alternate; display: inline-block; }
+        @keyframes cook { from { transform: rotate(-3deg); } to { transform: rotate(3deg); } }
+        #timer-display { background: rgba(0,0,0,0.7); color: white; border-radius: 10px; padding: 2px 8px; font-size: 0.9rem; }
 
-        /* 長押し削除オーバーレイ */
-        .card { background: white; border-radius: 15px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative; user-select: none; -webkit-user-select: none; }
-        .delete-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background: rgba(239,83,80,0.9); border-radius:15px; display:none; align-items:center; justify-content:center; color:white; font-weight:bold; z-index:100; cursor:pointer; }
+        /* スワイプ削除対応カード */
+        .swipe-container { position: relative; overflow: hidden; margin-bottom: 10px; border-radius: 15px; background: var(--btn-red); }
+        .card { background: white; padding: 15px; position: relative; z-index: 2; transition: transform 0.3s; touch-action: pan-x; }
+        .swipe-delete-btn { position: absolute; right: 0; top: 0; bottom: 0; width: 80px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; z-index: 1; }
 
-        /* 共通UI */
-        .btn-orange { background: var(--main-food); color: white; border: none; padding: 10px; border-radius: 8px; font-weight: bold; cursor: pointer; width: 100%; }
-        .btn-green { background: var(--btn-green); color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
-        .btn-red { background: var(--btn-red); color: white; border: none; padding: 5px 12px; border-radius: 20px; cursor: pointer; }
-        
-        /* モーダル */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 4000; justify-content: center; align-items: center; }
-        .modal-content { background: white; padding: 25px; border-radius: 20px; width: 85%; max-width: 400px; }
-        input, select { width: 100%; padding: 10px; margin: 5px 0; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; }
+        /* スケジュール */
+        .timeline-wrapper { position: relative; background: white; min-height: 1440px; }
+        .time-row { display: flex; height: 60px; border-bottom: 1px solid #eee; }
+        .time-label { width: 50px; font-size: 0.7rem; color: #999; text-align: right; padding-right: 5px; }
+        .plan-block { position: absolute; left: 55px; right: 10px; border-radius: 5px; padding: 5px; font-size: 0.7rem; font-weight: bold; background: #fff3e0; border-left: 4px solid var(--main-food); }
 
-        .overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.3); z-index: 2500; display: none; }
+        /* 共通ボタン */
+        .btn-orange { background: var(--main-food); color: white; border: none; padding: 10px; border-radius: 8px; width: 100%; font-weight: bold; margin: 5px 0; }
+        .btn-green { background: var(--btn-green); color: white; border: none; padding: 5px 10px; border-radius: 15px; }
+        .btn-red { background: var(--btn-red); color: white; border: none; padding: 5px 10px; border-radius: 15px; }
+
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 4000; align-items: center; justify-content: center; }
+        .modal-content { background: white; padding: 20px; border-radius: 20px; width: 85%; max-width: 400px; max-height: 80vh; overflow-y: auto; }
+        input, select { width: 100%; padding: 8px; margin: 5px 0; border: 1px solid #ddd; border-radius: 5px; }
     </style>
 </head>
-<body onclick="handleGlobalClick(event)">
+<body onclick="closeAllSwipes()">
 
 <div class="header">
     <button class="menu-btn" onclick="toggleMenu(event)">☰</button>
@@ -62,10 +64,10 @@
     <button class="plus-btn" id="header-plus" onclick="openPlanModal()" style="visibility: hidden;">＋</button>
 </div>
 
-<div class="overlay" id="overlay" onclick="toggleMenu(event)"></div>
+<div class="overlay" id="overlay" onclick="toggleMenu(event)" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.3); z-index:2500;"></div>
 
 <nav class="side-menu" id="side-menu">
-    <button class="menu-item active" onclick="showPage('room', 'お部屋')">🏠 お部屋</button>
+    <button class="menu-item" onclick="showPage('room', 'お部屋')">🏠 お部屋</button>
     <button class="menu-item" onclick="showPage('timer', '予定')">⏱ 予定</button>
     <button class="menu-item" onclick="showPage('todo', 'Todo')">📝 Todo</button>
     <button class="menu-item" onclick="showPage('habit', '習慣')">✨ 習慣</button>
@@ -76,25 +78,30 @@
     <section id="room" class="active">
         <div id="room-stage">
             <div id="talk-bubble" class="bubble">...</div>
+            <div id="pot-container">
+                <div class="pot">🍲</div>
+                <div id="timer-display">00:00</div>
+            </div>
             <div id="room-char" onclick="petChar()">
                 <span id="char-emoji">🥚</span>
+                <span class="char-face" id="char-face">^ ^</span>
             </div>
         </div>
-        <div class="card" style="margin-top:15px;">
-            <h4>🎁 名言箱（追加・一覧）</h4>
-            <input type="text" id="meigen-input" placeholder="新しい名言を入力">
+        <div class="card" style="margin-top:10px;">
+            <input type="text" id="meigen-input" placeholder="新しい名言を追加">
             <button class="btn-orange" onclick="addMeigen()">名言を保存</button>
-            <div id="meigen-list" style="margin-top:10px; font-size:0.8rem; max-height:80px; overflow-y:auto;"></div>
+            <div id="meigen-list" style="font-size:0.7rem; max-height:60px; overflow-y:auto; margin-top:5px;"></div>
         </div>
-        <div class="card">
-            <h4>🍽 本日の完食ログ</h4>
-            <div id="meal-log" style="font-size:0.85rem;"></div>
+        <div style="display:flex; gap:5px;">
+            <button class="btn-orange" onclick="exportData()" style="background:#88c; flex:1;">同期用データ出す</button>
+            <button class="btn-orange" onclick="importData()" style="background:#8c8; flex:1;">データ取り込む</button>
         </div>
     </section>
 
     <section id="timer">
+        <button class="btn-red" onclick="clearAllPlans()" style="width:100%; margin-bottom:10px;">予定をすべて消す 🗑</button>
         <div class="timeline-wrapper" id="timeline-wrapper">
-            <div id="current-bar" style="position:absolute; left:50px; right:0; height:3px; background:red; z-index:10;"></div>
+            <div id="current-bar" style="position:absolute; left:50px; right:0; height:2px; background:red; z-index:10;"></div>
             <div id="plan-container"></div>
         </div>
     </section>
@@ -102,22 +109,22 @@
     <section id="todo">
         <div class="card">
             <input type="text" id="todo-input" placeholder="タスク名">
-            <div style="display:flex; gap:5px; margin-top:5px;">
+            <div style="display:flex; gap:5px;">
                 <select id="todo-tag"><option>動く</option><option>書く</option><option>読む</option><option>写す</option></select>
-                <select id="todo-size"><option value="15">おつまみ(15分)</option><option value="30">軽食(30分)</option><option value="60">定食(60分)</option></select>
+                <select id="todo-size"><option value="15">おつまみ(15分)</option><option value="30">軽食(30分)</option><option value="60">定食(60分)</option><option value="90">フルコース(90分)</option></select>
             </div>
-            <button class="btn-orange" onclick="addTodo()" style="margin-top:10px;">注文する</button>
+            <button class="btn-orange" onclick="addTodo()">注文する</button>
         </div>
         <div id="todo-list"></div>
     </section>
 
     <section id="habit">
-        <div style="text-align:center; padding:15px; background:white; border-radius:15px; border:3px solid var(--main-food); margin-bottom:15px;">
-            満腹度: <span id="score-display" style="font-size:1.5rem; font-weight:bold;">0 pt</span>
+        <div style="text-align:center; padding:10px; background:white; border-radius:15px; border:2px solid var(--main-food); margin-bottom:10px;">
+            満腹度: <span id="score-display">0</span> pt
         </div>
         <div class="card">
             <input type="text" id="habit-input" placeholder="新しい習慣">
-            <button class="btn-orange" onclick="addNewHabit()" style="margin-top:5px;">習慣を追加</button>
+            <button class="btn-orange" onclick="addNewHabit()">習慣追加</button>
         </div>
         <div id="habit-list"></div>
     </section>
@@ -125,17 +132,21 @@
     <section id="reading">
         <div class="card" style="background:#f1f8e9;">
             <strong>📚 読書数: <span id="year-books">0</span>冊</strong>
-            <input type="text" id="book-search" placeholder="タイトルで検索..." oninput="renderBooks()">
+            <input type="text" id="book-search" placeholder="検索..." oninput="renderBooks()">
         </div>
         <div class="card">
-            <input type="text" id="bk-title" placeholder="タイトル（必須）">
+            <input type="text" id="bk-title" placeholder="本の名まえ（必須）">
             <input type="text" id="bk-author" placeholder="作者">
-            <input type="text" id="bk-pub" placeholder="出版社">
             <div style="display:flex; gap:5px;">
-                <input type="number" id="bk-current-page" placeholder="今のページ" style="flex:1;">
-                <input type="number" id="bk-total-page" placeholder="全ページ" style="flex:1;">
+                <input type="text" id="bk-pub" placeholder="出版社" style="flex:1;">
+                <input type="text" id="bk-year" placeholder="出版年" style="flex:1;">
             </div>
-            <button class="btn-orange" onclick="addBook()" style="background:#88d8b0; margin-top:10px;">本棚へ</button>
+            <div style="display:flex; gap:5px;">
+                <input type="number" id="bk-current" placeholder="今" style="flex:1;">
+                <input type="number" id="bk-total" placeholder="全" style="flex:1;">
+            </div>
+            <input type="date" id="bk-deadline" title="いつまでに読む？">
+            <button class="btn-orange" onclick="addBook()">本棚へ</button>
         </div>
         <div id="book-list"></div>
     </section>
@@ -149,11 +160,14 @@
             <select id="p-hour" style="flex:1;"></select>時
             <select id="p-min" style="flex:1;"></select>分から
         </div>
-        <select id="p-dur"><option value="30">30分</option><option value="60">1時間</option><option value="120">2時間</option></select>
-        <div style="display:flex; gap:10px; margin-top:15px;">
-            <button class="btn-orange" onclick="savePlan()">保存</button>
-            <button class="btn-orange" onclick="closeModal()" style="background:#ccc;">閉じる</button>
-        </div>
+        <select id="p-dur">
+            <option value="30">30分</option>
+            <option value="60">1時間</option>
+            <option value="90">1時間30分</option>
+            <option value="120">2時間</option>
+        </select>
+        <button class="btn-orange" onclick="savePlan()">保存</button>
+        <button class="btn-orange" onclick="closeModal()" style="background:#ccc;">閉じる</button>
     </div>
 </div>
 
@@ -161,27 +175,20 @@
     const getDB = (k, d) => JSON.parse(localStorage.getItem(k) || JSON.stringify(d));
     const setDB = (k, v) => localStorage.setItem(k, JSON.stringify(v));
 
-    let longPressTimer;
+    let focusTimer, focusSec = 0;
+    let startX = 0;
 
     window.onload = () => {
-        initTimeOptions();
-        initTimeline();
-        renderAll();
-        startWalking();
-        setInterval(autoTalk, 8000);
-        setInterval(updateTimeBar, 60000);
+        initTimeline(); initOptions(); renderAll(); startWalking();
+        setInterval(autoTalk, 8000); setInterval(updateTimeBar, 30000);
     };
-
-    // UI整理：何もないところをタップして閉じる
-    function handleGlobalClick(e) {
-        if(e.target.className === 'delete-overlay') return;
-        document.querySelectorAll('.delete-overlay').forEach(el => el.style.display = 'none');
-    }
 
     function toggleMenu(e) {
         if(e) e.stopPropagation();
-        document.getElementById('side-menu').classList.toggle('open');
-        document.getElementById('overlay').classList.toggle('active');
+        const m = document.getElementById('side-menu');
+        const o = document.getElementById('overlay');
+        m.classList.toggle('open');
+        o.style.display = m.classList.contains('open') ? 'block' : 'none';
     }
 
     function showPage(p, t) {
@@ -193,119 +200,138 @@
         if(p === 'timer') { updateTimeBar(); scrollToNow(); }
     }
 
-    // スケジュール帳（復活）
-    function initTimeline() {
-        const w = document.getElementById('timeline-wrapper');
-        for(let i=0; i<24; i++) {
-            const row = document.createElement('div'); row.className = 'time-row';
-            row.innerHTML = `<div class="time-label">${i}:00</div><div style="flex:1; border-left:3px solid #ffe0b2;"></div>`;
-            w.appendChild(row);
+    // スワイプ削除機能
+    function setupSwipe(el, type, index) {
+        el.addEventListener('touchstart', (e) => { startX = e.touches[0].clientX; });
+        el.addEventListener('touchmove', (e) => {
+            let diff = startX - e.touches[0].clientX;
+            if (diff > 50) { closeAllSwipes(); el.style.transform = "translateX(-80px)"; }
+            if (diff < -50) { el.style.transform = "translateX(0)"; }
+        });
+    }
+    function closeAllSwipes() { document.querySelectorAll('.card').forEach(c => c.style.transform = "translateX(0)"); }
+
+    function confirmDelete(type, index) {
+        if(confirm("本当に消してもいい？")) {
+            const keys = { plan:'fixedPlans', todo:'myTodos', habit:'myHabitList', book:'myBooks' };
+            let d = getDB(keys[type], []);
+            d.splice(index, 1); setDB(keys[type], d); renderAll();
         }
     }
 
-    function renderPlans() {
-        const p = getDB('fixedPlans', []);
-        document.getElementById('plan-container').innerHTML = p.map((x, i) => {
-            const el = document.createElement('div'); el.className = 'plan-block';
-            el.style.top = x.start + "px"; el.style.height = (x.end - x.start) + "px";
-            el.style.background = "#fff3e0"; el.innerHTML = x.title;
-            enableLongPress(el, 'plan', i);
-            return el.outerHTML;
-        }).join('');
-    }
-
-    // 名言とお喋り
-    function addMeigen() {
-        const input = document.getElementById('meigen-input');
-        if(!input.value) return;
-        const m = getDB('myMeigens', ["勉強は別腹！"]);
-        m.push(input.value); setDB('myMeigens', m); input.value = '';
-        renderMeigens();
-    }
-
-    function renderMeigens() {
-        const m = getDB('myMeigens', ["勉強は別腹！"]);
-        document.getElementById('meigen-list').innerHTML = m.map(x => `<div>・${x}</div>`).join('');
-    }
-
-    function autoTalk() {
-        const m = getDB('myMeigens', ["おいしそう！"]);
-        const b = document.getElementById('talk-bubble');
-        b.innerText = m[Math.floor(Math.random()*m.length)];
-        b.style.opacity = 1; setTimeout(() => b.style.opacity = 0, 4000);
-    }
-
+    // お部屋 & たまご演出
     function startWalking() {
         const char = document.getElementById('room-char');
-        setInterval(() => { char.style.left = (Math.random()*70 + 5) + "%"; }, 5000);
+        setInterval(() => { if(focusSec <= 0) char.style.left = (Math.random()*70 + 5) + "%"; }, 5000);
+    }
+    function autoTalk() {
+        const m = getDB('myMeigens', ["勉強は別腹！"]);
+        const b = document.getElementById('talk-bubble');
+        const f = document.getElementById('char-face');
+        b.innerText = m[Math.floor(Math.random()*m.length)];
+        b.style.opacity = 1; f.innerText = "o o";
+        setTimeout(() => { b.style.opacity = 0; f.innerText = "^ ^"; }, 4000);
     }
 
-    // 長押し削除システム（iPhone風）
-    function enableLongPress(el, type, index) {
-        const del = document.createElement('div');
-        del.className = 'delete-overlay'; del.innerText = '削除する';
-        el.appendChild(del);
+    // 味見（集中）& 予定反映
+    function startFocus(index) {
+        const todos = getDB('myTodos', []);
+        const task = todos[index];
+        focusSec = task.time * 60;
+        
+        // 予定ページに一時的な予定として追加
+        const now = new Date();
+        const start = now.getHours() * 60 + now.getMinutes();
+        const plans = getDB('fixedPlans', []);
+        plans.push({ title: "🔥集中:" + task.title, start: start, end: start + parseInt(task.time), isTemp: true });
+        setDB('fixedPlans', plans);
 
-        const start = (e) => {
-            longPressTimer = setTimeout(() => {
-                del.style.display = 'flex';
-                del.onclick = (ev) => { ev.stopPropagation(); deleteItem(type, index); };
-            }, 800);
-        };
-        const end = () => clearTimeout(longPressTimer);
-        el.addEventListener('touchstart', start); el.addEventListener('touchend', end);
-        el.addEventListener('mousedown', start); el.addEventListener('mouseup', end);
+        showPage('room', 'お部屋');
+        document.getElementById('pot-container').style.display = 'block';
+        updateFocusTimer();
+        
+        clearInterval(focusTimer);
+        focusTimer = setInterval(() => {
+            focusSec--;
+            updateFocusTimer();
+            if(focusSec <= 0) {
+                clearInterval(focusTimer);
+                document.getElementById('pot-container').style.display = 'none';
+                alert("完食！お疲れ様！");
+                updateScore(20);
+                // 集中が終わったらTodoから消す
+                todos.splice(index, 1); setDB('myTodos', todos);
+                renderAll();
+            }
+        }, 1000);
+    }
+    function updateFocusTimer() {
+        const m = Math.floor(focusSec / 60); const s = focusSec % 60;
+        document.getElementById('timer-display').innerText = `${m}:${String(s).padStart(2,'0')}`;
     }
 
-    function deleteItem(type, index) {
-        const keys = { plan:'fixedPlans', todo:'myTodos', habit:'myHabitList', book:'myBooks' };
-        let data = getDB(keys[type], []);
-        data.splice(index, 1); setDB(keys[type], data); renderAll();
-    }
-
-    // 読書（ページ計算復活）
-    function addBook() {
-        const title = document.getElementById('bk-title').value; if(!title) return;
-        const b = getDB('myBooks', []);
-        b.push({ 
-            title, author: document.getElementById('bk-author').value,
-            current: document.getElementById('bk-current-page').value || 0,
-            total: document.getElementById('bk-total-page').value || 0
-        });
-        setDB('myBooks', b); renderBooks();
-    }
-
+    // 読書計算（復活・進化）
     function renderBooks() {
         const query = document.getElementById('book-search').value;
         const books = getDB('myBooks', []);
         const filtered = books.filter(b => b.title.includes(query));
         document.getElementById('year-books').innerText = books.length;
         document.getElementById('book-list').innerHTML = filtered.map((b, i) => {
-            const progress = b.total > 0 ? Math.floor((b.current / b.total) * 100) : 0;
-            const el = document.createElement('div'); el.className = 'card';
-            el.innerHTML = `<strong>${b.title}</strong><br><small>${b.current} / ${b.total} ページ (${progress}%)</small>`;
-            enableLongPress(el, 'book', i); return el.outerHTML;
+            let calcText = "";
+            if (b.total > b.current && b.deadline) {
+                const rest = b.total - b.current;
+                const days = Math.ceil((new Date(b.deadline) - new Date()) / (1000*60*60*24));
+                if (days > 0) calcText = `<br><span style="color:red;">1日あと ${Math.ceil(rest/days)}ページ！</span>`;
+            }
+            return `
+            <div class="swipe-container">
+                <div class="swipe-delete-btn" onclick="confirmDelete('book', ${i})">削除</div>
+                <div class="card" ontouchstart="setupSwipe(this, 'book', ${i})">
+                    <strong>${b.title}</strong> (${b.year || '不明'})<br>
+                    <small>${b.author} / ${b.pub}</small><br>
+                    ${b.current} / ${b.total} ページ ${calcText}
+                </div>
+            </div>`;
         }).join('');
     }
 
-    // 習慣（マイナス復活）
-    function renderHabits() {
-        const h = getDB('myHabitList', ["勉強"]);
-        document.getElementById('habit-list').innerHTML = h.map((name, i) => {
-            const el = document.createElement('div'); el.className = 'card';
-            el.style.display = 'flex'; el.style.justifyContent = 'space-between';
-            el.innerHTML = `<span>${name}</span><div><button class="btn-green" onclick="updateScore(10)">おかわり</button><button class="btn-red" onclick="updateScore(-10)" style="margin-left:5px;">残す</button></div>`;
-            enableLongPress(el, 'habit', i); return el.outerHTML;
-        }).join('');
+    // データ同期用（エクスポート・インポート）
+    function exportData() {
+        const data = JSON.stringify(localStorage);
+        const blob = new Blob([data], {type: "application/json"});
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "delicious_study_data.json";
+        a.click();
+    }
+    function importData() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.onchange = e => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = () => {
+                const data = JSON.parse(reader.result);
+                for(let k in data) localStorage.setItem(k, data[k]);
+                location.reload();
+            };
+            reader.readAsText(file);
+        };
+        input.click();
     }
 
-    // その他機能
-    function initTimeOptions() {
+    /* その他基本機能 */
+    function initTimeline() {
+        const w = document.getElementById('timeline-wrapper');
+        for(let i=0; i<24; i++) w.innerHTML += `<div class="time-row"><div class="time-label">${i}:00</div><div style="flex:1; border-left:1px solid #ffe0b2;"></div></div>`;
+    }
+    function initOptions() {
         const h = document.getElementById('p-hour'); const m = document.getElementById('p-min');
         for(let i=0; i<24; i++) h.innerHTML += `<option value="${i}">${i}</option>`;
         for(let i=0; i<60; i+=5) m.innerHTML += `<option value="${i}">${i}</option>`;
     }
-    function updateScore(p) { let s = getDB('myTotalScore', 0); s += p; setDB('myTotalScore', Math.max(0, s)); renderAll(); }
+    function updateTimeBar() { document.getElementById('current-bar').style.top = (new Date().getHours()*60 + new Date().getMinutes()) + "px"; }
+    function scrollToNow() { document.getElementById('timer').scrollTop = (new Date().getHours()*60) - 100; }
     function openPlanModal() { document.getElementById('plan-modal').style.display = 'flex'; }
     function closeModal() { document.getElementById('plan-modal').style.display = 'none'; }
     function savePlan() {
@@ -314,34 +340,77 @@
         plans.push({ title: document.getElementById('p-name').value, start, end: start+parseInt(document.getElementById('p-dur').value) });
         setDB('fixedPlans', plans); closeModal(); renderPlans();
     }
-    function updateTimeBar() { 
-        const now = new Date(); 
-        document.getElementById('current-bar').style.top = (now.getHours()*60 + now.getMinutes()) + "px"; 
+    function clearAllPlans() { if(confirm("予定を全部消すよ？")) { setDB('fixedPlans', []); renderPlans(); } }
+    function renderPlans() {
+        const p = getDB('fixedPlans', []);
+        document.getElementById('plan-container').innerHTML = p.map((x, i) => `
+            <div class="swipe-container" style="position:absolute; top:${x.start}px; height:${x.end-x.start}px; left:55px; right:10px; margin:0; border-radius:5px;">
+                <div class="swipe-delete-btn" onclick="confirmDelete('plan', ${i})">消</div>
+                <div class="plan-block" style="position:static; height:100%; border:none; ${x.isTemp ? 'background:#e1f5fe; border-left:4px solid #03a9f4;' : ''}" ontouchstart="setupSwipe(this, 'plan', ${i})">${x.title}</div>
+            </div>
+        `).join('');
     }
-    function scrollToNow() { document.getElementById('timer').scrollTop = (new Date().getHours()*60) - 100; }
-    
     function addTodo() {
-        const todos = getDB('myTodos', []);
-        todos.push({ title: document.getElementById('todo-input').value, tag: document.getElementById('todo-tag').value, time: document.getElementById('todo-size').value });
-        setDB('myTodos', todos); renderTodos();
+        const t = getDB('myTodos', []);
+        t.push({ title: document.getElementById('todo-input').value, tag: document.getElementById('todo-tag').value, time: document.getElementById('todo-size').value });
+        setDB('myTodos', t); renderTodos();
     }
     function renderTodos() {
         const t = getDB('myTodos', []);
-        document.getElementById('todo-list').innerHTML = t.map((x, i) => {
-            const el = document.createElement('div'); el.className = 'card';
-            el.innerHTML = `[${x.tag}] <strong>${x.title}</strong> (${x.time}分)`;
-            enableLongPress(el, 'todo', i); return el.outerHTML;
-        }).join('');
+        document.getElementById('todo-list').innerHTML = t.map((x, i) => `
+            <div class="swipe-container">
+                <div class="swipe-delete-btn" onclick="confirmDelete('todo', ${i})">削除</div>
+                <div class="card" ontouchstart="setupSwipe(this, 'todo', ${i})">
+                    [${x.tag}] <strong>${x.title}</strong> (${x.time}分)<br>
+                    <button class="btn-green" onclick="startFocus(${i})">味見する</button>
+                </div>
+            </div>`).join('');
     }
+    function addNewHabit() {
+        const h = getDB('myHabitList', []); h.push(document.getElementById('habit-input').value);
+        setDB('myHabitList', h); renderHabits();
+    }
+    function renderHabits() {
+        const h = getDB('myHabitList', ["勉強"]);
+        document.getElementById('habit-list').innerHTML = h.map((name, i) => `
+            <div class="swipe-container">
+                <div class="swipe-delete-btn" onclick="confirmDelete('habit', ${i})">削除</div>
+                <div class="card" style="display:flex; justify-content:space-between; align-items:center;" ontouchstart="setupSwipe(this, 'habit', ${i})">
+                    <span>${name}</span>
+                    <div>
+                        <button class="btn-green" onclick="updateScore(10)">おかわり(+10)</button>
+                        <button class="btn-red" onclick="updateScore(-10)">残す(-10)</button>
+                    </div>
+                </div>
+            </div>`).join('');
+    }
+    function addBook() {
+        const b = getDB('myBooks', []);
+        b.push({ 
+            title: document.getElementById('bk-title').value, author: document.getElementById('bk-author').value,
+            pub: document.getElementById('bk-pub').value, year: document.getElementById('bk-year').value,
+            current: parseInt(document.getElementById('bk-current').value)||0, total: parseInt(document.getElementById('bk-total').value)||0,
+            deadline: document.getElementById('bk-deadline').value
+        });
+        setDB('myBooks', b); renderBooks();
+    }
+    function addMeigen() {
+        const m = getDB('myMeigens', []); m.push(document.getElementById('meigen-input').value);
+        setDB('myMeigens', m); document.getElementById('meigen-input').value = ''; renderMeigens();
+    }
+    function renderMeigens() {
+        const m = getDB('myMeigens', ["勉強は別腹！"]);
+        document.getElementById('meigen-list').innerHTML = m.map(x => `<div>・${x}</div>`).join('');
+    }
+    function updateScore(p) { let s = getDB('myTotalScore', 0); s += p; setDB('myTotalScore', Math.max(0, s)); renderAll(); }
     function renderAll() {
         renderPlans(); renderTodos(); renderHabits(); renderBooks(); renderMeigens();
-        document.getElementById('score-display').innerText = getDB('myTotalScore', 0) + " pt";
+        document.getElementById('score-display').innerText = getDB('myTotalScore', 0);
         const s = getDB('myTotalScore', 0);
         let em = "🥚"; if(s>=1000) em="🎂"; else if(s>=500) em="🍖"; else if(s>=300) em="🍱"; else if(s>=150) em="🍛"; else if(s>=50) em="🍳";
         document.getElementById('char-emoji').innerText = em;
     }
-    function petChar() { createSparkles(); }
+    function petChar() { updateScore(1); }
 </script>
-
 </body>
 </html>
