@@ -1,6 +1,995 @@
 <!DOCTYPE html>
 <html lang="ja">
-<head><meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>デリシャス・スタディ</title>
-    </head>
+<head>
+    <meta charset="UTF-8">
+    <title>わたしの学習アプリ</title>
+    <style>
+        /* 現在時刻を示す赤い線 */
+#current-time-line {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background-color: #ff4d4d; /* 目立つ赤色 */
+    z-index: 5;
+    pointer-events: none; /* 線が邪魔でボタンが押せないのを防ぐ */
+}
+
+/* 線の左側につける小さな三角形 */
+#current-time-line::before {
+    content: "▶";
+    position: absolute;
+    left: -15px;
+    top: -8px;
+    color: #ff4d4d;
+    font-size: 12px;
+}
+        /* 全体の設定 */
+        body { background-color: #fff9f0; text-align: center; padding-top: 20px; font-family: sans-serif; }
+
+        /* たまごちゃん全体を包む箱 */
+        #egg-container {
+            position: relative;
+            width: 100px;
+            height: 120px;
+            margin: 50px auto;
+            transition: left 0.3s ease-out;
+        }
+
+        /* たまご本体 */
+        #egg-body {
+            font-size: 80px;
+            position: absolute;
+            top: 0; left: 0; width: 100%;
+            text-align: center;
+            z-index: 2;
+        }
+
+        /* 顔パーツ */
+        .face {
+            position: absolute;
+            z-index: 3;
+            width: 100%;
+            text-align: center;
+            font-family: monospace;
+            color: #333;
+        }
+
+        /* 手足 */
+        .limb {
+            position: absolute;
+            background-color: #333;
+            z-index: 1;
+        }
+        .arm { width: 25px; height: 4px; top: 70px; }
+        .arm.left { right: 80px; transform: rotate(-20deg); }
+        .arm.right { left: 80px; transform: rotate(20deg); }
+
+        .leg { width: 4px; height: 20px; top: 105px; }
+        .leg.left { left: 35px; }
+        .leg.right { left: 60px; }
+
+        /* セクションを隠す設定 */
+        section { display: none; padding-bottom: 100px; }
+        section.active { display: block; }
+    </style>
+</head>
+<body>
+
+   <section id="page-room" class="active">
+    <h1 style="color: #ffb347; padding-top: 20px;">お部屋</h1>
+    
+    <p id="egg-message" style="background: white; display: inline-block; padding: 10px 20px; border-radius: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 30px;">勉強がんばろう！</p>
+    <p id="quote-author" style="margin: 5px 0 0 0; font-size: 12px; color: #888; text-align: right; font-style: italic;"></p>
+    <div style="text-align: center; margin-top: 15px;">
+        <button onclick="toggleQuoteManager()" style="background: #ffcc80; color: white; border: none; padding: 10px 20px; border-radius: 20px; font-weight: bold; cursor: pointer; box-shadow: 0 3px 0 #e6b873;">たまごに名言を教える</button>
+    </div>
+    
+    <div id="egg-container" style="position: relative; width: 120px; height: 120px; margin: 0 auto; transition: left 0.3s ease-out;">
+        
+        <div id="egg-face" class="face" style="position: absolute; top: 45px; left: 0; width: 100%; z-index: 10; font-family: monospace;">
+            <div id="egg-eye" style="font-size: 18px; color: #333; font-weight: bold;">^ ^</div>
+            <div id="egg-mouth" style="font-size: 16px; color: #333; margin-top: -2px;">w</div>
+        </div>
+
+        <div id="egg-body" style="font-size: 90px; position: absolute; top: 0; left: 0; width: 100%; text-align: center; z-index: 5;">🥚</div>
+<div id="furniture-0" style="position: absolute; bottom: 20px; left: 20px; font-size: 40px; display: none;">🧸</div>
+        <div id="furniture-1" style="position: absolute; bottom: 80px; right: 20px; font-size: 40px; display: none;">🪑</div>
+        <div id="furniture-2" style="position: absolute; top: 20px; left: 20px; font-size: 40px; display: none;">📚</div>
+        <div id="furniture-3" style="position: absolute; top: 20px; right: 20px; font-size: 40px; display: none;">🪴</div>
+        <div id="furniture-4" style="position: absolute; bottom: 10px; right: 80px; font-size: 50px; display: none;">🛋️</div>
+        <div id="egg-limbs" style="z-index: 1;">
+            <div class="limb arm left" id="arm-l"></div>
+            <div class="limb arm right" id="arm-r"></div>
+            <div class="limb leg left" id="leg-l"></div>
+            <div class="limb leg right" id="leg-r"></div>
+        </div>
+    </div>
+    <div id="quote-manager" style="display: none; background: #fafafa; margin: 20px; padding: 20px; border-radius: 25px; border: 2px solid #ffcc80;">
+        <h3 id="quote-form-title" style="margin-top: 0; color: #ffb347; font-size: 16px;">新しい名言を教える</h3>
+        <input type="hidden" id="edit-index" value="-1">
+        <input type="text" id="input-quote" placeholder="心にひびく言葉" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box;">
+        <input type="text" id="input-author" placeholder="誰の言葉？" style="width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box;">
+        
+        <div style="display: flex; gap: 10px;">
+            <button id="quote-save-btn" onclick="addOrUpdateQuote()" style="flex: 2; background: #ffb347; color: white; border: none; padding: 12px; border-radius: 15px; font-weight: bold; cursor: pointer;">教えてあげる</button>
+            <button onclick="cancelEdit()" id="cancel-btn" style="flex: 1; display: none; background: #ccc; color: white; border: none; padding: 12px; border-radius: 15px; cursor: pointer;">中止</button>
+        </div>
+        <h4 style="margin: 20px 0 10px; font-size: 14px; color: #888; border-bottom: 1px solid #ddd;">覚えた名言リスト</h4>
+        <div id="quote-list" style="max-height: 200px; overflow-y: auto;"></div>
+    </div>
+</section>
+  <section id="page-timer">
+    <div style="background: #ffb347; color: white; padding: 15px; font-weight: bold; text-align: center;">予定</div>
+    
+    <div style="padding: 15px;">
+        <button onclick="openAddModal()" style="width: 100%; background: #ffcc80; color: white; border: none; padding: 12px; border-radius: 25px; font-weight: bold; margin-bottom: 10px; cursor: pointer; font-size: 16px;">＋ 新しい予定を追加</button>
+        <button onclick="clearAllSchedule()" style="width: 100%; background: #ffab91; color: white; border: none; padding: 12px; border-radius: 25px; font-weight: bold; cursor: pointer;">予定をすべて空にする 🗑️</button>
+    </div>
+
+    <div style="background: white; margin: 0 15px; border-radius: 15px; border: 1px solid #eee; height: 500px; overflow-y: auto; position: relative;">
+        <div id="hour-labels" style="position: absolute; left: 0; top: 0; width: 60px; border-right: 1px solid #eee; background: #fafafa;"></div>
+
+        <div id="schedule-container" style="position: absolute; left: 60px; right: 0; top: 0; height: 1440px;">
+            <div id="current-time-line" style="position: absolute; left: 0; width: 100%; height: 2px; background: #ff4d4d; z-index: 10; pointer-events: none;"></div>
+        </div>
+    </div>
+
+    <div id="add-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 100;">
+        <div style="background: white; margin: 15% auto; width: 85%; padding: 25px; border-radius: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
+            <h3 style="margin-top: 0; color: #ffb347;">予定を追加</h3>
+            
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="font-size: 14px; color: #666;">開始時間</label><br>
+                <input type="time" id="sched-time" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; margin-top: 5px;">
+            </div>
+
+            <div style="margin-bottom: 15px; text-align: left;">
+                <label style="font-size: 14px; color: #666;">長さ</label><br>
+                <select id="sched-duration" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; margin-top: 5px;">
+                    <option value="5">5分</option>
+                    <option value="10">10分</option>
+                    <option value="15">15分</option>
+                    <option value="30">30分</option>
+                    <option value="60">1時間</option>
+                    <option value="90">1時間半</option>
+                    <option value="120">2時間</option>
+                </select>
+            </div>
+
+            <div style="margin-bottom: 25px; text-align: left;">
+                <label style="font-size: 14px; color: #666;">内容</label><br>
+                <input type="text" id="sched-task" placeholder="例：宿題、読書" style="width: 100%; padding: 10px; border-radius: 10px; border: 1px solid #ddd; box-sizing: border-box; margin-top: 5px;">
+            </div>
+
+            <button onclick="addSchedule()" style="width: 100%; background: #ffb347; color: white; border: none; padding: 12px; border-radius: 25px; font-weight: bold; margin-bottom: 10px;">追加する</button>
+            <button onclick="closeAddModal()" style="width: 100%; background: #eee; border: none; padding: 12px; border-radius: 25px;">キャンセル</button>
+        </div>
+    </div>
+</section>
+
+    <nav style="position: fixed; bottom: 0; left: 0; width: 100%; display: flex; background: #fff; border-top: 2px solid #ffb347; padding: 10px 0; z-index: 10;">
+        <button onclick="showPage('page-room')" style="flex: 1; background: none; border: none;">🏠<br>お部屋</button>
+        <button onclick="showPage('page-timer')" style="flex: 1; background: none; border: none;">⏱️<br>予定</button>
+        <button onclick="showPage('page-habit')" style="flex: 1; background: none; border: none;">✨<br>習慣</button>
+        <button onclick="showPage('page-reading')" style="flex: 1; background: none; border: none;">📖<br>読書</button>
+        <button onclick="showPage('page-todo')">
+    <span style="font-size: 24px;">📝</span><br>
+    Todo
+</button>
+    </nav>
+<section id="page-habit">
+    <div style="background: #ffb347; color: white; padding: 15px; font-weight: bold; text-align: center; font-size: 20px;">習慣</div>
+
+    <div style="background: white; margin: 20px; padding: 30px; border-radius: 30px; border: 4px solid #ffcc80; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        <div style="color: #666; font-size: 18px; display: inline-block; vertical-align: middle;">現在の満腹度：</div>
+        <div style="display: inline-block; vertical-align: middle; margin-left: 10px;">
+            <span id="satiety-points" style="color: #333; font-size: 48px; font-weight: bold;">0</span>
+            <span style="font-size: 20px; color: #333; margin-left: 5px;">pt</span>
+        </div>
+    </div>
+    <div style="background: #fdfdfd; margin: 20px; padding: 25px; border-radius: 30px; box-shadow: 0 10px 20px rgba(0,0,0,0.05); text-align: center;">
+        <input type="text" id="habit-input" placeholder="新しい習慣" style="width: 100%; padding: 15px; border-radius: 15px; border: 2px solid #eee; box-sizing: border-box; margin-bottom: 20px; font-size: 16px; outline: none;">
+        <button onclick="addHabit()" style="width: 100%; background: #ffcc80; color: white; border: none; padding: 15px; border-radius: 20px; font-weight: bold; font-size: 18px; cursor: pointer; box-shadow: 0 4px 0 #e6b873;">追加</button>
+        <button onclick="toggleSortMode()" id="sort-btn" style="flex: 1; background: #eee; color: #666; border: none; padding: 12px; border-radius: 15px; font-size: 12px; cursor: pointer;">並び替え</button>
+    </div>
+
+
+    <div id="habit-list" style="margin-top: 20px; padding-bottom: 100px;">
+        </div>
+</section>
+<section id="page-todo">
+    <div style="background: #ffb347; color: white; padding: 15px; font-weight: bold; text-align: center; font-size: 20px;">Todo</div>
+
+    <div style="background: white; margin: 20px; padding: 20px; border-radius: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); text-align: center;">
+        <input type="text" id="todo-input" placeholder="今日なにする？" style="width: 100%; padding: 12px; border-radius: 12px; border: 2px solid #eee; box-sizing: border-box; margin-bottom: 15px; font-size: 16px; outline: none;">
+        <button onclick="addTodo()" style="width: 100%; background: #ffcc80; color: white; border: none; padding: 12px; border-radius: 15px; font-weight: bold; font-size: 16px; cursor: pointer;">リストに追加</button>
+    </div>
+
+    <div id="todo-list" style="margin: 0 20px; padding-bottom: 100px;">
+        </div>
+</section>
+<section id="page-reading">
+    <div style="background: #ffb347; color: white; padding: 15px; font-weight: bold; text-align: center; font-size: 20px;">読書記録</div>
+
+    <div onclick="toggleGenreStats()" style="background: white; margin: 20px; padding: 25px; border-radius: 30px; border: 4px solid #ffcc80; text-align: center; cursor: pointer; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+        <div style="color: #666; font-size: 16px;">今年読んだ本の合計</div>
+        <div style="margin: 10px 0;">
+            <span id="total-books" style="color: #333; font-size: 48px; font-weight: bold;">0</span>
+            <span style="font-size: 20px; color: #333; margin-left: 5px;">冊</span>
+        </div>
+        
+        <div id="genre-stats" style="display: none; border-top: 1px dashed #ccc; margin-top: 15px; padding-top: 15px; text-align: left; font-size: 14px; color: #555;">
+            <p style="text-align: center; font-weight: bold; margin-bottom: 10px;">ジャンル別の内訳</p>
+            <div id="genre-list-details">
+                </div>
+        </div>
+        <div id="tap-hint" style="font-size: 12px; color: #ffa726; margin-top: 5px;">タップして内訳を表示</div>
+    </div>
+
+    <div style="background: #fdfdfd; margin: 20px; padding: 20px; border-radius: 25px; box-shadow: 0 10px 20px rgba(0,0,0,0.05);">
+        <input type="text" id="book-title" placeholder="本のタイトル" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 10px; box-sizing: border-box;">
+        
+        <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+            <input type="date" id="book-deadline" style="flex: 1; padding: 10px; border-radius: 12px; border: 1px solid #eee;">
+            <input type="number" id="book-pages" placeholder="総ページ数" style="width: 100px; padding: 10px; border-radius: 12px; border: 1px solid #eee;">
+        </div>
+        
+        <input type="text" id="book-genre" placeholder="ジャンル名（小説、勉強など）" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #eee; margin-bottom: 15px; box-sizing: border-box;">
+        
+        <button onclick="addBook()" style="width: 100%; background: #ffcc80; color: white; border: none; padding: 15px; border-radius: 20px; font-weight: bold; font-size: 16px; cursor: pointer;">読書リストに追加</button>
+    </div>
+
+    <div id="reading-list" style="margin: 0 20px; padding-bottom: 100px;"></div>
+</section>
+  <script>
+    // 1. ページ切り替えルール
+    function showPage(pageId) {
+        const allPages = document.querySelectorAll('section');
+        allPages.forEach(page => {
+            page.style.display = 'none';
+        });
+        document.getElementById(pageId).style.display = 'block';
+
+        // 予定ページを開いたら赤い線を更新
+        if (pageId === 'page-timer') {
+            updateCurrentTimeLine();
+        }
+    }
+
+    // 2. タイムテーブルの目盛り（1時〜24時）を作る
+    function createTimeLabels() {
+        const labels = document.getElementById('hour-labels');
+        if (!labels) return;
+        let html = "";
+        for (let i = 1; i <= 24; i++) {
+            html += `<div style="height: 60px; border-bottom: 1px dashed #eee; line-height: 20px;">${i}:00</div>`;
+        }
+        labels.innerHTML = html;
+    }
+
+    // 3. 赤い線を今の時間の位置に動かす
+    function updateCurrentTimeLine() {
+        const line = document.getElementById('current-time-line');
+        if (!line) return;
+
+        const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+
+        // 1分1px計算
+        const topPosition = (hours * 60) + minutes;
+        line.style.top = topPosition + "px";
+    }
+
+    // 4. 予定を「柱」に追加する
+    function addSchedule() {
+        const time = document.getElementById('sched-time').value;
+        const task = document.getElementById('sched-task').value;
+        const container = document.getElementById('schedule-container');
+
+        if (!time || !task) {
+            alert("時間と内容を入れてね！");
+            return;
+        }
+
+        const [hours, minutes] = time.split(':').map(Number);
+        const topPosition = (hours * 60) + minutes;
+
+        const sticky = document.createElement('div');
+        sticky.style.cssText = `
+            position: absolute;
+            top: ${topPosition}px;
+            left: 5px;
+            width: 90%;
+            background: #fff9c4;
+            border-left: 5px solid #ffeb3b;
+            padding: 5px;
+            font-size: 12px;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+        `;
+        sticky.innerHTML = `<span>${time} ${task}</span><span onclick="this.parentElement.remove()" style="cursor:pointer">×</span>`;
+        container.appendChild(sticky);
+
+        document.getElementById('sched-task').value = "";
+        document.getElementById('egg-message').innerText = `${time}に${task}だね！了解！`;
+    }
+
+    // 5. たまごちゃんのカクカク移動
+    setInterval(() => {
+        const roomPage = document.getElementById('page-room');
+        if (roomPage.style.display === 'none') return;
+
+        const container = document.getElementById('egg-container');
+        const randomX = Math.floor(Math.random() * 6) * 15;
+        container.style.left = randomX + '%';
+
+        document.getElementById('arm-l').style.transform = `rotate(${Math.random() * 40 - 40}deg)`;
+        document.getElementById('arm-r').style.transform = `rotate(${Math.random() * 40}deg)`;
+        
+        const mouth = document.getElementById('egg-mouth');
+        if (mouth) mouth.innerText = (Math.random() > 0.7) ? 'o' : 'w';
+    }, 3000);
+
+    // 6. 読書の計算
+    function calculateProgress() {
+        const title = document.getElementById('bk-title').value;
+        const total = parseInt(document.getElementById('bk-total').value);
+        const current = parseInt(document.getElementById('bk-current').value);
+        const display = document.getElementById('result-display');
+
+        if (!title || !total || isNaN(current)) {
+            display.innerHTML = "<span style='color: red;'>タイトルとページ数を入れてね！</span>";
+            return;
+        }
+
+        const nokori = total - current;
+        const percent = Math.floor((current / total) * 100);
+
+        if (nokori <= 0) {
+            display.innerHTML = `🎉 <strong>「${title}」完食！</strong>`;
+        } else {
+            display.innerHTML = `<div>「${title}」は今 <strong>${percent}%</strong>！<br>あと <strong>${nokori}ページ</strong></div>`;
+        }
+    }
+
+    // 起動時に実行する初期設定
+    createTimeLabels();
+    updateCurrentTimeLine();
+    setInterval(updateCurrentTimeLine, 60000); // 1分ごとに赤線を更新
+
+    // 1. 0:00〜23:00 までの目盛りを作る
+function createTimeLabels() {
+    const labels = document.getElementById('hour-labels');
+    if (!labels) return;
+    let html = "";
+    for (let i = 0; i <= 23; i++) {
+        html += `<div style="height: 60px; border-bottom: 1px solid #eee; text-align: center; line-height: 60px; color: #999; font-size: 12px;">${i}:00</div>`;
+    }
+    labels.innerHTML = html;
+}
+
+// 2. 予定を画像のようなデザインで追加する
+function addSchedule() {
+    const time = document.getElementById('sched-time').value;
+    const task = document.getElementById('sched-task').value;
+    const container = document.getElementById('schedule-container');
+
+    if (!time || !task) return;
+
+    const [hours, minutes] = time.split(':').map(Number);
+    const topPosition = (hours * 60) + minutes;
+
+    const sticky = document.createElement('div');
+    sticky.style.cssText = `
+        position: absolute;
+        top: ${topPosition}px;
+        left: 5px;
+        right: 5px;
+        height: 80px; /* 少し厚みを持たせる */
+        background: #fff9e6;
+        border-radius: 15px;
+        display: flex;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        border: 1px solid #ffe0b2;
+    `;
+    
+    // 画像のような「左に内容、右に赤色の消去ボタン」の構成
+    sticky.innerHTML = `
+        <div style="flex: 1; padding: 10px; font-size: 14px; color: #555; text-align: left;">${task}</div>
+        <div onclick="this.parentElement.remove()" style="width: 60px; background: #ff8a80; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold;">消</div>
+    `;
+    
+    container.appendChild(sticky);
+}
+
+// 3. 予定をすべて空にする
+function clearAllSchedule() {
+    if(confirm("予定をすべて消してもいいですか？")) {
+        document.getElementById('schedule-container').innerHTML = '<div id="current-time-line" style="position: absolute; left: 0; width: 100%; height: 2px; background: #ff4d4d; z-index: 10; pointer-events: none;"></div>';
+    }
+}
+
+// ポップアップを開く
+function openAddModal() {
+    document.getElementById('add-modal').style.display = 'block';
+}
+
+// ポップアップを閉じる
+function closeAddModal() {
+    document.getElementById('add-modal').style.display = 'none';
+}
+
+// ポップアップを開く
+function openAddModal() {
+    document.getElementById('add-modal').style.display = 'block';
+}
+
+// ポップアップを閉じる
+function closeAddModal() {
+    document.getElementById('add-modal').style.display = 'none';
+    // 中身をリセット
+    document.getElementById('sched-task').value = "";
+}
+
+// 予定を追加する（最新版）
+function addSchedule() {
+    const timeInput = document.getElementById('sched-time').value;
+    const taskInput = document.getElementById('sched-task').value;
+    const durationInput = parseInt(document.getElementById('sched-duration').value);
+    const container = document.getElementById('schedule-container');
+
+    if (!timeInput || !taskInput) {
+        alert("時間と内容を入力してください！");
+        return;
+    }
+
+    // 位置を計算
+    const [hours, minutes] = timeInput.split(':').map(Number);
+    const topPosition = (hours * 60) + minutes;
+
+    // 付箋（予定）を作成
+    const sticky = document.createElement('div');
+    sticky.style.cssText = `
+        position: absolute;
+        top: ${topPosition}px;
+        left: 5px;
+        right: 5px;
+        height: ${durationInput}px;
+        background: #fff9e6;
+        border-radius: 10px;
+        display: flex;
+        overflow: hidden;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        border: 1px solid #ffe0b2;
+        min-height: 30px;
+    `;
+    
+    sticky.innerHTML = `
+        <div style="flex: 1; padding: 5px 10px; font-size: 13px; color: #555; overflow: hidden; display: flex; align-items: center;">
+            ${timeInput} ${taskInput}
+        </div>
+        <div onclick="this.parentElement.remove()" style="width: 40px; background: #ff8a80; color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; font-weight: bold;">消</div>
+    `;
+    
+    container.appendChild(sticky);
+
+    // 完了後の処理
+    closeAddModal();
+    document.getElementById('egg-message').innerText = `${taskInput}、がんばろうね！`;
+}
+
+// 予定をすべて消す
+function clearAllSchedule() {
+    if(confirm("予定をすべて削除しますか？")) {
+        const container = document.getElementById('schedule-container');
+        // 赤い線だけ残して、他を消す
+        container.innerHTML = '<div id="current-time-line" style="position: absolute; left: 0; width: 100%; height: 2px; background: #ff4d4d; z-index: 10; pointer-events: none;"></div>';
+        updateCurrentTimeLine();
+    }
+}
+    let satietyPoints = 0; // 最初は0ポイント
+
+// ポイントを計算して表示を更新する
+function updatePoints(amount) {
+    satietyPoints += amount;
+    // 0以下にならないようにする場合
+    if (satietyPoints < 0) satietyPoints = 0;
+    
+    document.getElementById('satiety-points').innerText = satietyPoints;
+
+    // たまごちゃんの反応（お部屋のメッセージ）
+    const eggMsg = document.getElementById('egg-message');
+    if (eggMsg) {
+        eggMsg.innerText = amount > 0 ? "わーい！満腹度アップ！✨" : "次はがんばろうね...！";
+    }
+}
+
+// 習慣を追加する
+function addHabit() {
+    const input = document.getElementById('habit-input');
+    const habitName = input.value;
+    const list = document.getElementById('habit-list');
+
+    if (!habitName) {
+        alert("習慣の名前を入力してね！");
+        return;
+    }
+
+    // 習慣カード（スライド削除用の外枠）
+    const habitWrapper = document.createElement('div');
+    habitWrapper.style.cssText = `overflow: hidden; margin: 10px 20px; border-radius: 20px; position: relative; background: #ff8a80;`;
+
+    // 習慣カードの本体
+    const habitCard = document.createElement('div');
+    habitCard.style.cssText = `
+        background: white; padding: 20px; display: flex; align-items: center; 
+        justify-content: space-between; position: relative; z-index: 2;
+        transition: transform 0.3s ease-out; cursor: grab; border: 1px solid #eee;
+        border-radius: 20px;
+    `;
+    
+    habitCard.innerHTML = `
+        <span style="font-size: 18px; color: #333; font-weight: bold;">${habitName}</span>
+        <div style="display: flex; gap: 10px;">
+            <button onclick="updatePoints(10)" style="background: #c5e1a5; color: #2e7d32; border: none; padding: 10px 15px; border-radius: 12px; font-weight: bold; cursor: pointer;">ご褒美 +10</button>
+            <button onclick="updatePoints(-10)" style="background: #ffecb3; color: #f57c00; border: none; padding: 10px 15px; border-radius: 12px; font-weight: bold; cursor: pointer;">残念 -10</button>
+        </div>
+    `;
+
+    // スライド削除の仕組み
+    let startX = 0;
+    habitCard.addEventListener('touchstart', (e) => startX = e.touches[0].pageX);
+    habitCard.addEventListener('touchmove', (e) => {
+        let diff = e.touches[0].pageX - startX;
+        if (diff < 0) habitCard.style.transform = `translateX(${diff}px)`;
+    });
+    habitCard.addEventListener('touchend', (e) => {
+        let diff = e.changedTouches[0].pageX - startX;
+        if (diff < -100) {
+            habitCard.style.transform = `translateX(-100%)`;
+            setTimeout(() => habitWrapper.remove(), 3000);
+        } else {
+            habitCard.style.transform = `translateX(0)`;
+        }
+    });
+
+    habitWrapper.appendChild(habitCard);
+    
+    // スライドしたときに見える「削除」の文字
+    const deleteLabel = document.createElement('div');
+    deleteLabel.innerText = "削除";
+    deleteLabel.style.cssText = `position: absolute; right: 20px; top: 50%; transform: translateY(-50%); color: white; font-weight: bold; z-index: 1;`;
+    habitWrapper.appendChild(deleteLabel);
+
+    list.appendChild(habitWrapper);
+    input.value = ""; // 入力欄をリセット
+}
+// ポイント更新関数
+function updatePoints(amount) {
+    satietyPoints += amount;
+    if (satietyPoints < 0) satietyPoints = 0;
+    
+    // 習慣ページの表示を更新
+    const ptsDisplay = document.getElementById('satiety-points');
+    if (ptsDisplay) ptsDisplay.innerText = satietyPoints;
+    
+    // 進化をチェック
+    updateEggEvolution();
+
+    // メッセージ更新
+    const eggMsg = document.getElementById('egg-message');
+    if (eggMsg) {
+        if (amount > 0) eggMsg.innerText = "おいしい！もっと食べて進化したいな！✨";
+        else eggMsg.innerText = "お腹すいちゃった...次は頑張ろう？";
+    }
+}
+
+// 料理を進化させる関数
+function updateEggEvolution() {
+    const body = document.getElementById('egg-body');
+    const mouth = document.getElementById('egg-mouth');
+
+    if (satietyPoints < 50) {
+        // 0-49: たまご
+        body.innerText = "🥚";
+    } 
+    else if (satietyPoints < 100) {
+        // 50-99: 目玉焼き
+        body.innerText = "🍳";
+    } 
+    else if (satietyPoints < 200) {
+        // 100-199: オムライス
+        body.innerText = "🍛"; // カレーの絵文字ですが、黄色いのでオムライスに見立てています
+    } 
+    else {
+        // 200以上: ケーキ
+        body.innerText = "🍰";
+        mouth.innerText = "v"; // ケーキを食べて嬉しくて口の形が変わる遊び心
+    }
+}
+ function addTodo() {
+    const input = document.getElementById('todo-input');
+    const task = input.value;
+    const list = document.getElementById('todo-list');
+
+    if (!task) return;
+
+    const todoItem = document.createElement('div');
+    todoItem.style.cssText = `
+        background: white; margin-bottom: 10px; padding: 15px; border-radius: 15px; 
+        display: flex; align-items: center; justify-content: space-between; 
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05); border-left: 5px solid #ffcc80;
+    `;
+
+    todoItem.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <input type="checkbox" onchange="toggleTodo(this)" style="width: 20px; height: 20px; cursor: pointer;">
+            <span style="font-size: 16px; color: #333;">${task}</span>
+        </div>
+        <button onclick="this.parentElement.remove()" style="background: none; border: none; color: #ccc; cursor: pointer; font-size: 18px;">✕</button>
+    `;
+
+    list.appendChild(todoItem);
+    input.value = ""; // 入力欄を空にする
+}
+
+// チェックを入れた時の演出
+function toggleTodo(checkbox) {
+    const text = checkbox.nextElementSibling;
+    const eggMsg = document.getElementById('egg-message');
+
+    if (checkbox.checked) {
+        text.style.textDecoration = "line-through";
+        text.style.color = "#ccc";
+        if (eggMsg) eggMsg.innerText = "おつかれさま！すごいすごい！👏";
+    } else {
+        text.style.textDecoration = "none";
+        text.style.color = "#333";
+    }
+}
+// 一番上に書いておくと安心な変数
+let completedTodoCount = 0; 
+
+// Todoのチェック状態を切り替える関数
+function toggleTodo(checkbox) {
+    const text = checkbox.nextElementSibling;
+    const eggMsg = document.getElementById('egg-message');
+    const hatMenu = document.getElementById('hat-menu');
+
+    if (checkbox.checked) {
+        // 達成時のスタイル
+        text.style.textDecoration = "line-through";
+        text.style.color = "#ccc";
+        
+        // カウントを増やす
+        completedTodoCount++;
+        
+        // 10個達成判定
+        if (completedTodoCount >= 10) {
+            if (hatMenu) hatMenu.style.display = "block"; // 帽子メニューを出す
+            if (eggMsg) eggMsg.innerText = "すごい！10個達成で帽子をゲットしたよ！🎓";
+        } else {
+            if (eggMsg) eggMsg.innerText = `あと${10 - completedTodoCount}個で帽子がもらえるよ！`;
+        }
+    } else {
+        // チェックを外した時
+        text.style.textDecoration = "none";
+        text.style.color = "#333";
+        completedTodoCount--;
+    }
+}
+
+// 帽子の表示・非表示を切り替える関数
+function toggleHat() {
+    const hat = document.getElementById('egg-hat');
+    const btn = document.getElementById('hat-toggle-btn');
+    if (!hat) return;
+
+    if (hat.style.display === "none" || hat.style.display === "") {
+        hat.style.display = "block";
+        btn.innerText = "帽子をぬぐ";
+    } else {
+        hat.style.display = "none";
+        btn.innerText = "帽子をかぶる";
+    }
+}
+let totalBooksRead = 0;
+let genreData = {}; // ジャンルごとの冊数を保存
+
+// ジャンル内訳の表示切り替え
+function toggleGenreStats() {
+    const stats = document.getElementById('genre-stats');
+    const hint = document.getElementById('tap-hint');
+    if (stats.style.display === "none") {
+        stats.style.display = "block";
+        hint.innerText = "タップで閉じる";
+        updateGenreDisplay();
+    } else {
+        stats.style.display = "none";
+        hint.innerText = "タップして内訳を表示";
+    }
+}
+
+// ジャンル表示を最新にする
+function updateGenreDisplay() {
+    const container = document.getElementById('genre-list-details');
+    container.innerHTML = "";
+    for (let genre in genreData) {
+        if (genreData[genre] > 0) {
+            container.innerHTML += `<div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                <span>${genre}</span><span>${genreData[genre]} 冊</span>
+            </div>`;
+        }
+    }
+    if (container.innerHTML === "") container.innerHTML = "まだ読了した本はありません";
+}
+
+// 本を追加する
+function addBook() {
+    const title = document.getElementById('book-title').value;
+    const deadline = document.getElementById('book-deadline').value;
+    const pages = document.getElementById('book-pages').value;
+    const genre = document.getElementById('book-genre').value;
+    const list = document.getElementById('reading-list');
+
+    if (!title || !deadline || !pages || !genre) {
+        alert("すべての項目を入力してね！");
+        return;
+    }
+
+    // 今日から目標日までの日数を計算
+    const today = new Date();
+    const targetDate = new Date(deadline);
+    const diffTime = targetDate - today;
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    
+    // 1日に読むべきページ数
+    const pagesPerDay = diffDays > 0 ? Math.ceil(pages / diffDays) : pages;
+
+    const bookCard = document.createElement('div');
+    bookCard.style.cssText = `background: white; padding: 20px; border-radius: 20px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border-left: 8px solid #ffcc80;`;
+    
+    bookCard.innerHTML = `
+        <div style="font-weight: bold; font-size: 18px; color: #333;">${title}</div>
+        <div style="font-size: 13px; color: #888; margin: 5px 0;">ジャンル: ${genre} / あと ${diffDays} 日</div>
+        <div style="background: #fff9c4; padding: 10px; border-radius: 10px; margin: 10px 0; font-weight: bold; color: #f57f17; text-align: center;">
+            今日は <span style="font-size: 20px;">${pagesPerDay}</span> ページ読もう！
+        </div>
+        <button onclick="finishBook('${genre}', this)" style="width: 100%; background: #c5e1a5; color: #2e7d32; border: none; padding: 10px; border-radius: 12px; font-weight: bold; cursor: pointer;">読み終わった！</button>
+    `;
+
+    list.appendChild(bookCard);
+
+    // 入力欄をクリア
+    document.getElementById('book-title').value = "";
+    document.getElementById('book-pages').value = "";
+    document.getElementById('book-genre').value = "";
+}
+
+// 読み終わった時の処理
+function finishBook(genre, button) {
+    // 合計冊数を増やす
+    totalBooksRead++;
+    document.getElementById('total-books').innerText = totalBooksRead;
+
+    // ジャンル別統計を増やす
+    if (!genreData[genre]) genreData[genre] = 0;
+    genreData[genre]++;
+
+    // カードを消す
+    button.parentElement.remove();
+
+    // たまごちゃんの反応
+    const eggMsg = document.getElementById('egg-message');
+    if (eggMsg) eggMsg.innerText = "読了おめでとう！物知りになったね！📚";
+    
+    // 表示の更新
+    updateGenreDisplay();
+}
+let furnitureCount = 0; // 持っている家具の数
+const furnitureList = ["🧸", "🪑", "📚", "🪴", "🛋️", "🖼️"]; // 解放される家具の順番
+
+function finishBook(genre, button) {
+    // 冊数を増やす
+    totalBooksRead++;
+    document.getElementById('total-books').innerText = totalBooksRead;
+
+    // ジャンル別統計
+    if (!genreData[genre]) genreData[genre] = 0;
+    genreData[genre]++;
+
+    // ★新機能：家具を解放する
+    const furnitureId = `furniture-${furnitureCount}`;
+    const targetFurniture = document.getElementById(furnitureId);
+    if (targetFurniture) {
+        targetFurniture.style.display = "block"; // 隠れていた家具を表示
+        furnitureCount++;
+    }
+
+    // カードを消す
+    button.parentElement.remove();
+
+    // たまごちゃんの反応
+    const eggMsg = document.getElementById('egg-message');
+    if (eggMsg) {
+        eggMsg.innerText = "読了おめでとう！新しい家具が届いたよ！🎁";
+    }
+    
+    updateGenreDisplay();
+}
+let isSortMode = false;
+
+// 並び替えモードの切り替え
+function toggleSortMode() {
+    isSortMode = !isSortMode;
+    const btn = document.getElementById('sort-btn');
+    const controls = document.querySelectorAll('.sort-controls');
+    
+    if (isSortMode) {
+        btn.innerText = "完了";
+        btn.style.background = "#c5e1a5";
+        btn.style.color = "#2e7d32";
+        controls.forEach(c => c.style.display = "flex");
+    } else {
+        btn.innerText = "並び替え";
+        btn.style.background = "#eee";
+        btn.style.color = "#666";
+        controls.forEach(c => c.style.display = "none");
+    }
+}
+
+function addHabit() {
+    const input = document.getElementById('habit-input');
+    const habitName = input.value;
+    const list = document.getElementById('habit-list');
+
+    if (!habitName) return;
+
+    const habitCard = document.createElement('div');
+    habitCard.className = "habit-item";
+    habitCard.style.cssText = `
+        background: white; margin: 10px 20px; padding: 15px; border-radius: 20px; 
+        display: flex; align-items: center; justify-content: space-between; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05); position: relative;
+    `;
+    
+    habitCard.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <div class="sort-controls" style="display: ${isSortMode ? 'flex' : 'none'}; flex-direction: column; gap: 5px;">
+                <button onclick="moveHabit(this, 'up')" style="border:none; background:#f0f0f0; border-radius:5px; padding:2px 5px; cursor:pointer;">▲</button>
+                <button onclick="moveHabit(this, 'down')" style="border:none; background:#f0f0f0; border-radius:5px; padding:2px 5px; cursor:pointer;">▼</button>
+            </div>
+            <span style="font-weight: bold;">${habitName}</span>
+        </div>
+        
+        <div style="display: flex; gap: 8px; align-items: center;">
+            <button onclick="updatePoints(10)" style="background: #c5e1a5; border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer;">+10</button>
+            <button onclick="updatePoints(-10)" style="background: #ffecb3; border: none; padding: 8px 12px; border-radius: 10px; cursor: pointer;">-10</button>
+            <button onclick="this.closest('.habit-item').remove()" style="background: none; border: none; cursor: pointer; font-size: 16px;">🗑️</button>
+        </div>
+    `;
+
+    list.appendChild(habitCard);
+    input.value = "";
+}
+
+// 習慣を上下に移動させる
+function moveHabit(btn, direction) {
+    const item = btn.closest('.habit-item');
+    if (direction === 'up') {
+        if (item.previousElementSibling) {
+            item.parentNode.insertBefore(item, item.previousElementSibling);
+        }
+    } else {
+        if (item.nextElementSibling) {
+            item.parentNode.insertBefore(item.nextElementSibling, item);
+        }
+    }
+}
+let quotes = []; // 名言を保存する配列
+
+// 管理画面の開閉
+function toggleQuoteManager() {
+    const qm = document.getElementById('quote-manager');
+    qm.style.display = qm.style.display === "none" ? "block" : "none";
+    if(qm.style.display === "block") updateQuoteList();
+}
+
+// 名言の追加または更新
+function addOrUpdateQuote() {
+    const text = document.getElementById('input-quote').value;
+    const author = document.getElementById('input-author').value;
+    const editIndex = parseInt(document.getElementById('edit-index').value);
+
+    if (!text) return;
+
+    if (editIndex === -1) {
+        // 新規追加
+        quotes.push({ text, author });
+    } else {
+        // 再編集の保存
+        quotes[editIndex] = { text, author };
+        cancelEdit(); // 編集モード終了
+    }
+
+    document.getElementById('input-quote').value = "";
+    document.getElementById('input-author').value = "";
+    updateQuoteList();
+    saveAllData(); // LocalStorageへ保存
+}
+
+// リストの表示（削除・再編集ボタン付き）
+function updateQuoteList() {
+    const list = document.getElementById('quote-list');
+    list.innerHTML = "";
+    quotes.forEach((q, index) => {
+        const item = document.createElement('div');
+        item.style.cssText = "background:white; padding:10px; margin-bottom:8px; border-radius:12px; font-size:13px; border:1px solid #eee;";
+        item.innerHTML = `
+            <div style="margin-bottom:5px;"><strong>「${q.text}」</strong></div>
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#888;">― ${q.author || '不明'}</span>
+                <div>
+                    <button onclick="editQuote(${index})" style="background:#e3f2fd; border:none; color:#1e88e5; border-radius:5px; padding:3px 8px; cursor:pointer; margin-right:5px;">編集</button>
+                    <button onclick="deleteQuote(${index})" style="background:#ffebee; border:none; color:#e53935; border-radius:5px; padding:3px 8px; cursor:pointer;">削除</button>
+                </div>
+            </div>
+        `;
+        list.appendChild(item);
+    });
+}
+
+// 編集モードにする
+function editQuote(index) {
+    const q = quotes[index];
+    document.getElementById('input-quote').value = q.text;
+    document.getElementById('input-author').value = q.author;
+    document.getElementById('edit-index').value = index;
+    
+    document.getElementById('quote-form-title').innerText = "名言をなおしてあげる";
+    document.getElementById('quote-save-btn').innerText = "保存する";
+    document.getElementById('cancel-btn').style.display = "block";
+    document.getElementById('input-quote').focus();
+}
+
+function cancelEdit() {
+    document.getElementById('input-quote').value = "";
+    document.getElementById('input-author').value = "";
+    document.getElementById('edit-index').value = "-1";
+    document.getElementById('quote-form-title').innerText = "新しい名言を教える";
+    document.getElementById('quote-save-btn').innerText = "教えてあげる";
+    document.getElementById('cancel-btn').style.display = "none";
+}
+
+function deleteQuote(index) {
+    if(confirm("この名言を忘れてもいい？")) {
+        quotes.splice(index, 1);
+        updateQuoteList();
+        saveAllData();
+    }
+}
+
+// たまごちゃんのおしゃべり（5秒ごとに判定）
+function eggTalk() {
+    const msg = document.getElementById('egg-message');
+    const auth = document.getElementById('quote-author');
+    
+    if (quotes.length > 0 && Math.random() < 0.4) { // 40%の確率で名言
+        const q = quotes[Math.floor(Math.random() * quotes.length)];
+        msg.innerText = `「${q.text}」`;
+        auth.innerText = q.author ? `― ${q.author}` : "";
+    } else {
+        const defaults = ["勉強がんばろう！", "おなかすいたな〜", "お部屋がきれいだね", "無理しないでね"];
+        msg.innerText = defaults[Math.floor(Math.random() * defaults.length)];
+        auth.innerText = "";
+    }
+}
+setInterval(eggTalk, 5000);
+</script>
+
+</body>
+</html>
