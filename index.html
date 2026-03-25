@@ -24,8 +24,20 @@
     color: #ff4d4d;
     font-size: 12px;
 }
-        /* 全体の設定 */
-        body { background-color: #fff9f0; text-align: center; padding-top: 20px; font-family: sans-serif; }
+body { 
+    font-family: 'Helvetica Neue', Arial, sans-serif; 
+    background: #fffde7; 
+    margin: 0; 
+    padding: 0; 
+    color: #333; 
+    font-size: 18px; /* ← ここを16pxから18px（または20px）にアップ！ */
+}
+
+/* 入力欄とボタンも大きくする */
+input, button {
+    font-size: 18px !important; 
+    padding: 10px !important;
+}
 
         /* たまごちゃん全体を包む箱 */
         #egg-container {
@@ -989,6 +1001,59 @@ function eggTalk() {
     }
 }
 setInterval(eggTalk, 5000);
+// --- 💾 データを保存する魔法の関数 ---
+function saveAllData() {
+    const data = {
+        satietyPoints,
+        completedTodoCount,
+        totalBooksRead,
+        genreData,
+        furnitureCount,
+        showHat,
+        quotes,
+        // リストの中身も保存
+        habits: Array.from(document.querySelectorAll('.habit-name')).map(s => s.innerText),
+        todos: Array.from(document.querySelectorAll('#todo-list span')).map(s => ({
+            name: s.innerText,
+            checked: s.style.textDecoration === "line-through"
+        }))
+    };
+    // ブラウザに「tamagoData」という名前で保存
+    localStorage.setItem('tamagoData', JSON.stringify(data));
+}
+
+// --- 📂 ページを開いた時にデータを読み込む ---
+window.onload = function() {
+    const saved = localStorage.getItem('tamagoData');
+    if (!saved) return;
+    const d = JSON.parse(saved);
+    
+    // 各数値の復元
+    satietyPoints = d.satietyPoints || 0;
+    completedTodoCount = d.completedTodoCount || 0;
+    totalBooksRead = d.totalBooksRead || 0;
+    genreData = d.genreData || {};
+    furnitureCount = d.furnitureCount || 0;
+    showHat = d.showHat || false;
+    quotes = d.quotes || [];
+
+    // 画面の見た目を戻す
+    document.getElementById('satiety-points').innerText = satietyPoints;
+    document.getElementById('total-books').innerText = totalBooksRead;
+    updateEggEvolution();
+    updateReadingStats();
+    updateQuoteList();
+    
+    // 家具と帽子の復活
+    if (showHat) document.getElementById('egg-hat').style.display = "block";
+    for(let i=0; i<furnitureCount; i++) {
+        document.getElementById(`furniture-${i}`).style.display = "block";
+    }
+
+    // 保存されていたリストを画面に作り直す
+    d.habits.forEach(h => addHabit(h));
+    d.todos.forEach(t => addTodo(t.name, t.checked));
+};
 </script>
 
 </body>
